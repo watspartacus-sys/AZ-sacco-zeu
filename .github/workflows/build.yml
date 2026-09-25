@@ -1,0 +1,96 @@
+name: Build Az Zeu Sacco V14 FIX
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: 'temurin', java-version: '17' }
+      - name: CLEAN OLD V2 COMPLETELY
+        run: |
+          rm -rf app.gradle build gradle gradlew.github/workflows/build2.yml
+          git status
+      - name: Create Az Zeu Sacco V14
+        run: |
+          mkdir -p app/src/main/java/com/az/zeu
+          echo "android.useAndroidX=true" > gradle.properties
+          echo "include ':app'" > settings.gradle
+          cat > build.gradle <<'EOF'
+          buildscript {
+            repositories { google(); mavenCentral() }
+            dependencies {
+              classpath 'com.android.tools.build:gradle:8.2.2'
+              classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22'
+            }
+          }
+          allprojects { repositories { google(); mavenCentral() } }
+          EOF
+          cat > app/build.gradle <<'EOF'
+          apply plugin: 'com.android.application'
+          apply plugin: 'org.jetbrains.kotlin.android'
+          android {
+            namespace 'com.az.zeu.sacco14'
+            compileSdk 34
+            defaultConfig {
+              applicationId "com.az.zeu.sacco14"
+              minSdk 24; targetSdk 34
+              versionCode 140; versionName "14.0-AZ-ZEU-WORKER"
+            }
+            buildTypes { release { minifyEnabled false } }
+            compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+            kotlinOptions { jvmTarget='17' }
+            buildFeatures { compose true }
+            composeOptions { kotlinCompilerExtensionVersion '1.5.10' }
+          }
+          dependencies {
+            implementation 'androidx.core:core-ktx:1.12.0'
+            implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
+            implementation 'androidx.activity:activity-compose:1.8.2'
+            implementation platform('androidx.compose:compose-bom:2024.02.00')
+            implementation 'androidx.compose.ui:ui'
+            implementation 'androidx.compose.material3:material3'
+          }
+          EOF
+          cat > app/src/main/java/com/az/zeu/MainActivity.kt <<'KOT'
+          package com.az.zeu
+          import android.os.Bundle
+          import androidx.activity.ComponentActivity
+          import androidx.activity.compose.setContent
+          import androidx.compose.foundation.layout.*
+          import androidx.compose.material3.*
+          import androidx.compose.runtime.*
+          import androidx.compose.ui.Alignment
+          import androidx.compose.ui.Modifier
+          import androidx.compose.ui.graphics.Color
+          import androidx.compose.ui.text.font.FontWeight
+          import androidx.compose.ui.unit.dp
+          import androidx.compose.ui.unit.sp
+          class MainActivity : ComponentActivity() { override fun onCreate(b: Bundle?) { super.onCreate(b); setContent {
+            var show by remember { mutableStateOf(false) }
+            if(!show){ Box(Modifier.fillMaxSize(), contentAlignment=Alignment.Center){ Button(onClick={show=true}, colors=ButtonDefaults.buttonColors(containerColor=Color(0xFF0D4D2A))){Text("AZ ZEU SACCO V14.0 - TAP TO ENTER WORKER SACCO")} } }
+            else {
+              Column(Modifier.fillMaxSize().padding(16.dp)){
+                Text("AZ ZEU SACCO V14.0", fontWeight=FontWeight.Bold, fontSize=22.sp, color=Color(0xFF0D4D2A))
+                Text("COMPLETE WORKER SACCO - IF YOU SEE THIS, V14 IS WORKING!", color=Color.Green, fontWeight=FontWeight.Bold)
+                Spacer(Modifier.height(10.dp))
+                Text("Modules: Membership, Savings 50k, Shares 20k, Loans 3x 10%, Guarantors, Reports, Dividend, PIN")
+                Text("This proves v2 is GONE. Now I will send full code in next step.")
+              }
+            }
+          } } }
+          KOT
+          cat > app/src/main/AndroidManifest.xml <<'EOF'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+           <application android:label="AZ ZEU SACCO V14" android:theme="@android:style/Theme.Material.Light">
+            <activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity>
+           </application>
+          </manifest>
+          EOF
+      - uses: gradle/gradle-build-action@v3
+        with: { gradle-version: 8.5 }
+      - run: gradle :app:assembleDebug --stacktrace
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AZ-ZEU-V14-FIX-TEST
+          path: app/build/outputs/apk/debug/app-debug.apk
